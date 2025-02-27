@@ -46,3 +46,6 @@
 
 # Debug files
 *.dSYM/
+
+# Additional files
+pmpp.pdf

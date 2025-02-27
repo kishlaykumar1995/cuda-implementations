@@ -1,6 +1,6 @@
 # Basic Parallelisations
 
-This folder contains basic parallelisations of various models and algorithms.
+This folder contains basic parallelisations.
 
 ## Basic Addition
 
