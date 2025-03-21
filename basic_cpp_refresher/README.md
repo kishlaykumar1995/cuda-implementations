@@ -141,3 +141,17 @@
   - `!(A || B)` is equivalent to `!A && !B`
 
 - C++ has no logical XOR operator. However, we can use the `!=` operator to achieve the same effect. For example, `a != b` is equivalent to `!(a && b) && (a || b)`.
+
+- `std::bitset` allows us to do bit level operations on a fixed number of bits. It contains functions like `set()`, `reset()`, `flip()`, `count()`, `any()`, `none()`, `all()`, and `test()`.
+
+- It is best to use bitwise operators with unsigned integers or bitsets. 
+
+- Bit shifting in C++ is endian agnostic. Left-shift is always towards the most significant bit and right-shift is always towards the least significant bit.
+
+- The `<<` and `>>` operators are overloaded for `std::ostream` and `std::istream` to allow for easy input and output of data.
+
+- Bitwise operators perform integral promotion on their operands. This means that if the operands are smaller than `int`, they will be promoted to `int` before the operation is performed. eg `unsigned short` gets promoted to `unsigned int` before the operation is performed.
+
+- Avoid performing bit shift operations on operands smaller than int because some operators like `~` and `<<` are width sensitive and may produce unexpected results.
+
+- 
