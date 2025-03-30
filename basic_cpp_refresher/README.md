@@ -154,4 +154,119 @@
 
 - Avoid performing bit shift operations on operands smaller than int because some operators like `~` and `<<` are width sensitive and may produce unexpected results.
 
-- 
+- Namespaces can be accessed in two ways:
+  - Fully qualified name: `std::cout`
+  - Using directive: `using namespace std;` (not recommended; can cause name clashes)
+
+- Forward declarations of functions defined in a namespace must be in the same namespace. For example:
+  ```cpp
+  namespace math {
+      int add(int a, int b);
+  }
+  ```
+  ```cpp
+  #include "add.h"
+  namespace math {
+      int add(int a, int b) {
+          return a + b;
+      }
+  }
+  ```
+
+- Same namespace blocks can be declared in multiple locations (across files or within the same file) and the compiler will merge them into a single namespace. The C++ standard library makes extensive use of this feature to provide a consistent interface across multiple files. For example, the `std::cout` and `std::cin` objects are declared in multiple header files, but they are all merged into the same `std` namespace when the program is compiled.
+
+- Local variables have **block scope** (i.e., they are only visible within the block in which they are declared) and **automatic duration** (i.e., they are created when the block is entered and destroyed when the block is exited).
+
+- Global variables have **file scope** (or **global scope**) (i.e., they are visible throughout the file in which they are declared) and **static duration** (i.e., they are created when the program starts and destroyed when the program ends).
+
+- Variables defined in namespaces with global scope are also global variables. However, they are accessible only via the namespace they are defined in. For example, `std::cout` is a global variable that is defined in the `std` namespace. It is accessible only via the `std` namespace. 
+
+- Unlike local variables, variables with static duration(including static local variables) are automatically initialized to zero if not explicitly initialized.
+
+- If we have 2 variables of the same name inside a nested block and we try to access it, then the innermost variable will be used and the outer scope variable is hidden. This is called **variable shadowing**. Variable shadowing is best avoided because it can lead to confusion and bugs in the code (like the wrong variable being used/modified).
+
+- If we want to access a global scope variable that is shadowed by a local variable, we can use the `::` operator.
+
+- An identifier's linkage determines whether other declarations of the same identifier refer to the same entity or not. Global (non const) variables have **external linkage** by default, which means that they can be accessed from other translation units. Local variables have no linkage. To make a non-constant global variable have internal linkage, we can use the `static` keyword.
+
+- Functions have external linkage by default, which means that they can be accessed from other translation units. To make a function have internal linkage, we can use the `static` keyword. This is useful for creating helper functions that are only used within a single translation unit.
+
+- `extern` keyword can be used to make global variables and functions have **external linkage**. Non-constant global variables have external linkage by default, so `extern` is not needed. `extern` can also be used to place a **forward declaration** of a variable in a different translation unit (with no initialization). 
+
+- Variables and functions with external linkage can be accessed anywhere within our program via forward declarations. Forward function declarations don't need the `extern` keyword because functions have external linkage by default and the compiler can understand that it is a forward declaration based on whether we give the function body. However, variable forward declarations need the `extern` to distinguish between uninitialized variable definitions and forward declarations (else they look the same).
+
+- Non constant global variables are best avoided for the following reasons:
+  - They can be changed by any part of the program, making it difficult to track down bugs.
+  - They make the program less modular and harder to understand. Also, function reusability is reduced because the function may depend on the global variable being in a certain state.
+  - Within a file, global variables are initialized in the order they are declared. This can lead to undefined behavior if one global variable depends on another global variable that has not yet been initialized.
+  - **Static initialization order fiasco** is a problem that occurs when a global variable is initialized in one translation unit and is used in another translation unit before it has been initialized. This happens because the order of initialization of global variables across translation units is ambiguous and can lead to undefined behavior.
+
+- If at all global variables are needed, it is best to use them inside a namespace and encapsulate them making sure they can be accessed directly only within the file (via static or const) and external access is only possible via functions.
+
+- **Inline expansion** is a technique used by the compiler to replace a function call with the actual code of the function. This can improve performance by eliminating the overhead of a function call. Modern optimizing compilers make a decision on whether a function should be expanded inline or not. Some function calls **cannot be expanded** such as those defined in another translation unit.
+
+- Historically, the `inline` keyword was used to hint to the compiler that a function should be expanded inline. However, this is no longer necessary because modern compilers are able to make this decision on their own.
+
+- In mordern C++, the `inline` keyword is used to indicate that a function can be defined in multiple translation units without violating the One Definition Rule (ODR). `inline` functions have the following requirements:
+  - The compiler needs to see the function definition in every translation unit that uses it. Only one such definition is allowed per translation unit or it results in a compiler error.
+  - The definition can be after a function call if a forward declaration is provided. But, in this case, the compiler will likely not perform inline expansion.
+  - The definition must be the same in all translation units or undefined behavior will occur.
+ 
+- `inline` functions are typically defined in header files, which are included in multiple translation units. This is particluarly useful for small functions and **header-only libraries**. The following functions are implicitly inline:
+  - functions defined inside a class, struct, or union type definition.
+  - constexpr/consteval functions
+  - functions implicitly instantiated from templates
+
+- `inline` variables were introduced in C++17. They are similar to `inline` functions, but they can be used to define variables that can be shared across multiple translation units without violating the One Definition Rule (ODR). They have the same requirements as `inline` functions i.e., the compiler must be able to see identical and the full definition of the variable in every translation unit that uses it.
+
+- Inline variables have external linkage by default so they are visible to the linker and can be de-duplicated.
+  
+- **static** has different meanings in different contexts:
+  - A global variable has **static duration** meaning it is created when the program starts and destroyed when the program ends. 
+  - `static` keyword when used with a global variable or function, it gives it **internal linkage**. 
+  - `static` keyword when used with a local variable, it gives it **static duration**. This means that the variable is created when the program starts and destroyed when the program ends, but it is only visible within the block in which it is declared. 
+
+- `static` local variables are best used to avoid expensive local object initialization each time the function is called. 
+
+- `static` and `extern` are called **storage class specifiers**. They are used to specify the storage duration and linkage of variables and functions.
+
+- A **qualified name** is a name that includes an associated scope. For example, in `std::cout`, `cout` is qualified by namespace `std` namespace. An **unqualified name** is a name that does not include a scoping qualifier. For example, just `cout` is unqualified. 
+
+- A **using declaration** allows us to use an unqualified name (with no scope) for a qualified name. For example, `using std::cout;` allows us to use `cout` instead of `std::cout`. 
+
+- A **using directive** allows all identifiers in a namespace to be referenced without qualification. For example, `using namespace std;` allows us to use `cout`, `cin`, etc. without qualification.
+
+- `using` statements shouldn't be used before `#include` statements because the behavior of using statements is dependent on what identifiers have already been introduced which makes them order dependent. This is also why we should avoid using statements in header files (even inside functions since other factors (like previous #include statements) might change the way our using statement behaves).
+
+- All content declared inside **unnamed namespaces** is treated as part of the parent namespace. However, identifiers declared inside unnamed namespaces are treated as having **internal linkage**.
+
+- An `inline` namespace it typically used for versioning content. Like unnamed namespaces, inline namespaces are also treated as part of the parent namespace. However, inline namespaces do not affect linkage. eg:
+  ```cpp
+  #include <iostream>
+
+  inline namespace V1 // declare an inline namespace named V1
+  {
+      void doSomething()
+      {
+          std::cout << "V1\n";
+      }
+  }
+
+  namespace V2 // declare a normal namespace named V2
+  {
+      void doSomething()
+      {
+          std::cout << "V2\n";
+      }
+  }
+
+  int main()
+  {
+      V1::doSomething(); // calls the V1 version of doSomething()
+      V2::doSomething(); // calls the V2 version of doSomething()
+
+      doSomething(); // calls the inline version of doSomething() (which is V1)
+
+      return 0;
+  }
+  ```
