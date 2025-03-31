@@ -73,6 +73,9 @@ int main() {
         std::cout <<h_a[i]<<" "<<h_b[i]<<" "<< h_c_gpu[i]<<"\n";
     }
     
+    free(h_a);
+    free(h_b);
+    free(h_c_gpu);
     cudaFree(d_a);
     cudaFree(d_b);
     cudaFree(d_c);
