@@ -1,6 +1,6 @@
 # Important points regarding C++
 
-[Reference Link](https://www.learncpp.com/)
+Source: [learncpp.com](https://www.learncpp.com/)
 
 - C++ is a statically typed language, meaning that the type of a variable must be known at compile time.
 
@@ -270,3 +270,61 @@
       return 0;
   }
   ```
+- inline and unnamed namespaces can be used together but in such cases it is better to nest the anonymous namespace inside the inline namespace as it gives us an explicit namespace name we can use. Also, we can seperate out the parts for which we want internal linkage into the nested anonymous namespace from the ones whose linkage we don't care about.
+
+- `case` labels in `switch` statements do not introduce a new scope and they are part of the scope of the switch block itself. This is why we need statements like `break` or `return` to exit the switch block or else the program will continue executing the next case label (ignoring the condition in that label). This is called **fall through** behavior.
+
+- When we want intentional fall through behavior, we can use the `[[fallthrough]]` attribute (**Attributes** are a way to provide additional information to the compiler about the code).
+
+- Because `switch` statements do not introduce a new scope, we can declare or define variables inside a case label. Initialization of variables in case labels is not allowed (except in the last case) because it is not guaranteed that the variable will be initialized before it is used as the switch could jump over the initialization statement.
+
+- switch case labels can also be placed in a sequence. For example:
+  ```cpp
+  switch (x)
+  {
+      case 1:
+      case 2:
+      case 3:
+          std::cout << "x is 1, 2, or 3\n";
+          break;
+      default:
+          std::cout << "x is not 1, 2, or 3\n";
+          break;
+  }
+  ```
+  This is not fallthrough behavior.
+
+- `goto` is an unconditional jump statement that can be used to jump to a labeled statement in the same function. It has **function scope** and can be used to jump to any label in the same function. It is generally considered bad practice to use `goto` because it can make code difficult to read and maintain and leads to a condition called **spaghetti code**.
+
+- When jumping forward, we cannot jump over a variable declaration or initialization that is still in scope at the location being jumped to. This is because the variable will not be initialized before it is used, leading to undefined behavior. But, we can jump backwards over a variable declaration or initialization and it will be re-initialized when the program jumps back to that location. 
+
+- `goto` statements are best used for error handling and moving out of deeply nested loops.
+
+- `std::exit()` is a halt statement that resides in the `cstdlib` header file. It is used to **terminate a program normally** immediately. Since, `std::exit` doesn't cleanup any local variables in the current function or up the call stack, C++ provides us a function `std::atexit()` which allows us to call a function which is automatically called when `std::exit()` is called. This is useful for cleanup tasks like closing files, releasing memory and database connections, etc.
+
+- In multithreaded programs, `std::exit()` can cause programs to crash because the thread calling `std::exit()`will cleanup static objects that other threads may still be using. `std::quick_exit()` terminates the program without cleaning up any static objects and may or may not do other types of cleanup. `std::at_quick_exit()` is similar to `std::atexit()` but it registers a function to be called when `std::quick_exit()` is called.
+
+- `std::abort()` function causes the program to **terminate abnormally**. It does not do any cleanup.
+
+- `std::terminate()` function is called implicitly when an exception is not handled. It does not do any cleanup and calls `std::abort()`.
+
+- A pseudo random number generator (PRNG) is an algorithm that generates a sequence of numbers that approximates the properties of random numbers. PRNGs are not truly random because they use a deterministic algorithm to generate the numbers. However, they can produce a sequence of numbers that appears to be random for most practical purposes. eg:
+```cpp
+unsigned int LCG16() // our PRNG
+{
+    static unsigned int s_state{ 0 }; // only initialized the first time this function is called
+
+    // Generate the next number
+
+    // We modify the state using large constants and intentional overflow to make it hard
+    // for someone to casually determine what the next number in the sequence will be.
+
+    s_state = 8253729 * s_state + 2396403; // first we modify the state
+    return s_state % 32768; // then we use the new state to generate the next number in the sequence
+}
+```
+
+- An assertion is a statement that checks if a condition is true. If the condition is false, the program will terminate and print an error message. In C++, runtime assertions are implemented using the `assert()` macro. Assertions can be used to check for **preconditions** (conditions that must be true before a function is called), **postconditions** (conditions that must be true after a function is called), and **invariants** (conditions that must be true at all times). They can be disabled in release builds by defining the `NDEBUG` macro. 
+
+- `assert()` is a macro that is defined in the `cassert` header file. `static_assert()` is a compile-time assertion that is a keyword in C++. It is used to check conditions at compile time. If the condition is false, the compiler will generate an error message. `static_assert()` is an assertion that is evaluated at compile time. Its expression must be a constant expression.
+
