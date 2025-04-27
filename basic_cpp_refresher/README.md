@@ -328,3 +328,56 @@ unsigned int LCG16() // our PRNG
 
 - `assert()` is a macro that is defined in the `cassert` header file. `static_assert()` is a compile-time assertion that is a keyword in C++. It is used to check conditions at compile time. If the condition is false, the compiler will generate an error message. `static_assert()` is an assertion that is evaluated at compile time. Its expression must be a constant expression.
 
+- A **value preserving conversion** (or **safe conversion**) is a type of conversion where every source value can be represented by the destination type without loss of information. Numeric promotions are value preserving conversions and hence safe. So, the compiler does not issue a warning for them.
+
+- Numeric conversions can fall into 3 safety categories:
+  - **Value preserving conversions**: Safe numeric conversions where the destination type can represent every source value without loss of information. 
+  - **Reinterpretive conversions**: Unsafe numeric conversions where the converted value may be different from the original value but no data is lost. Signed/Unsigned conversions fall into this category.
+  - **Lossy conversions**: Unsafe numeric conversions where data may be lost during conversion.
+
+- A **narrowing conversion** is a potentially unsafe conversion where the destination type may not be able to represent all the values of the source type. For example, converting a `double` to an `int` is a narrowing conversion because the `int` type cannot represent all the values of the `double` type. Narrowing conversions should be avoided as they can be unsafe and a source or errors. In cases where narrowing conversion is unavoidabvle, it is best to use explicit casts to indicate that the conversion is intentional.
+
+- A **usual arithmetic conversion** is a set of rules that the compiler uses to implicitly convert operands to the same type when they are used with an operator that requires them to be of the same type. Overloaded operators are not subject to usual arithmetic conversions rules.
+
+- C++ supports 5 different types of casts:
+  - `static_cast`: Performs compile time type conversions between compatible types.
+  - `dynamic_cast`: Performs runtimetype conversions on pointers and references in a polymorphic hierarchy. 
+  - `const_cast`: Used to add or remove the `const` qualifier from a variable.
+  - `reinterpret_cast`: Reinterprets the bit-level representation of one type as if it were another type.
+  - `C-style cast`: A combination of `static_cast`, `const_cast`, and `reinterpret_cast`. It is not type-safe and should be avoided in favor of the C++ casts.
+
+- `using` keyword creates an alias for an existing data type. eg: `using Distance = double;` creates an alias `Distance` for the type `double`.
+
+- `typedef` keyword is similar to `using` keyword but it is an older C-style way of creating type aliases. It is not recommended to use `typedef` in modern C++ code. 
+
+- `auto` keyword has a number of uses. It can used for **type deduction** where the compiler deduces the type of a variable from its initializer. Type deduction drops constness and reference qualifiers.
+
+- `auto` keyword can also be used as a function return type to have the compiler infer the return type of the function. This is called **trailing return type**. This is normally avoided.
+
+- `auto` keyword when used with function parameters, doesn't invoke type deduction but rather a different feature called **function templates**.
+
+- `decltype` keyword is used to query the type of an expression without evaluating it. It can be used to create type aliases and to deduce the type of a variable from its initializer.
+
+- C++ performs **name mangling** of overloaded functions to create unique names for each function. So, even though the source code may look the same, the compiler generates different names for each function. Name mangling is compiler specific.
+
+- In case we have a function that we explicitly don't want to be called, we can use the `= delete` syntax. `= delete` participates in all stages of function overload resolution so in case of ambiguous overloads, the compiler will throw an error. 
+
+- C++ does not (as of C++23) support a function call syntax such as `print(,,3)` as a way to provide an explicit value. This has three major consequences:
+  - In a function call, any explicitly provided arguments must be the leftmost arguments.
+  - If a parameter is given a default argument, all subsequent parameters (to the right) must also be given default arguments.
+  - If more than one parameter has a default argument, the leftmost parameter should be the one most likely to be explicitly set by the user.
+
+- Default arguments can be included in function declarations or function definitions but not both. It is best to include them in the function declaration (given there is one) so that they are visible to all translation units that use the function. 
+
+ - **C++ templates** were designed to simplify the process of creating generic code. They allow us to write code that can work with any data type without having to write separate functions or classes for each data type. In a template, we can use one or more placeholder types which is a data type that is not known until the template is instantiated. The compiler generates the code for each data type when the template is instantiated. This is called **template instantiation**. Templates can work with types that don't even exist when the template is defined.
+
+ - A **function template** is a function-like definition that is used to generate one or more overloaded functions. The initial template used to generate the function is called the **primary template**. The generated functions are called **instantiated functions (or specializations)**. When creating a primary template, we use **placeholder types** (also called **type template parameters**) for any parameter types, return types, and types used in the function body that we want to be generic.
+
+ - C++ supports 3 types of template parameters:
+  - **Type template parameters**: These are used to create generic functions and classes that can work with any data type. They are defined using the `template<typename T>` syntax.
+  - **Non-type template parameters**: These are used to create generic functions and classes that can work with any value(or constexpr) of a specific type. They are defined using the `template<T value>` syntax.
+  - **Template template parameters**: These are used to create generic functions and classes that can work with other templates. They are defined using the `template<template<typename> class T>` syntax.
+
+  - A `static` local variable used inside a function template, each instantiation of the function template will have its own copy of the static variable.
+
+  
