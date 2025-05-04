@@ -369,15 +369,290 @@ unsigned int LCG16() // our PRNG
 
 - Default arguments can be included in function declarations or function definitions but not both. It is best to include them in the function declaration (given there is one) so that they are visible to all translation units that use the function. 
 
- - **C++ templates** were designed to simplify the process of creating generic code. They allow us to write code that can work with any data type without having to write separate functions or classes for each data type. In a template, we can use one or more placeholder types which is a data type that is not known until the template is instantiated. The compiler generates the code for each data type when the template is instantiated. This is called **template instantiation**. Templates can work with types that don't even exist when the template is defined.
+- **C++ templates** were designed to simplify the process of creating generic code. They allow us to write code that can work with any data type without having to write separate functions or classes for each data type. In a template, we can use one or more placeholder types which is a data type that is not known until the template is instantiated. The compiler generates the code for each data type when the template is instantiated. This is called **template instantiation**. Templates can work with types that don't even exist when the template is defined.
 
- - A **function template** is a function-like definition that is used to generate one or more overloaded functions. The initial template used to generate the function is called the **primary template**. The generated functions are called **instantiated functions (or specializations)**. When creating a primary template, we use **placeholder types** (also called **type template parameters**) for any parameter types, return types, and types used in the function body that we want to be generic.
+- A **function template** is a function-like definition that is used to generate one or more overloaded functions. The initial template used to generate the function is called the **primary template**. The generated functions are called **instantiated functions (or specializations)**. When creating a primary template, we use **placeholder types** (also called **type template parameters**) for any parameter types, return types, and types used in the function body that we want to be generic.
 
- - C++ supports 3 types of template parameters:
+- C++ supports 3 types of template parameters:
   - **Type template parameters**: These are used to create generic functions and classes that can work with any data type. They are defined using the `template<typename T>` syntax.
   - **Non-type template parameters**: These are used to create generic functions and classes that can work with any value(or constexpr) of a specific type. They are defined using the `template<T value>` syntax.
   - **Template template parameters**: These are used to create generic functions and classes that can work with other templates. They are defined using the `template<template<typename> class T>` syntax.
 
-  - A `static` local variable used inside a function template, each instantiation of the function template will have its own copy of the static variable.
+- A `static` local variable used inside a function template, each instantiation of the function template will have its own copy of the static variable.
 
-  
+- A constexpr function is a function that is allowed to be called in a constant expression. To make a function a constexpr function, we simply use the constexpr keyword in front of the return type. Constexpr functions are only guaranteed to be evaluated at compile-time when used in a context that requires a constant expression. Otherwise they may be evaluated at compile-time (if eligible) or runtime. Constexpr functions are implicitly inline, and the compiler must see the full definition of the constexpr function to call it at compile-time.
+
+- A `consteval` function is a function that must evaluate at compile-time. Consteval functions otherwise follow the same rules as constexpr functions. 
+
+- `constexpr` functions can call non `constexpr` functions, but only when they are being used in a non-constant expression context. In this case, the non-constexpr function will be evaluated at runtime.
+
+- `std::is_constant_evaluated` is a function that can be used to check if a function is being evaluated at compile-time or runtime. It returns true if the function is being evaluated at compile-time and false otherwise. However, it returns `false` even when it is being evaluated at compile time in a context where it is not required to be a constant expression. So, it is more of a check of whether **the function is being forced to be evaluated at compile-time** rather than if it is being evaluated at compile-time. Also, C++ 23 introduced `if consteval` which works in the same way but is more concise and cleaner.
+
+- C++ supported compound data types:
+  - Functions
+  - C-style Arrays
+  - Pointer types:
+    - Pointer to object
+    - Pointer to function
+    - Pointer to member types:
+    - Pointer to data member
+    - Pointer to member function
+  - Reference types:
+    - L-value references
+    - R-value references
+  - Enumerated types:
+    - Unscoped enumerations
+    - Scoped enumerations
+  - Class types:
+    - Structs
+    - Classes
+    - Unions
+
+- **Lvalue expressions** are those that evaluate to functions or identifiable objects (including variables) that persist beyond the end of the expression.
+
+- **Rvalue expressions** are those that evaluate to values, including literals and temporary objects that do not persist beyond the end of the expression.
+
+- References are **not objects** and do not have a memory address. They are simply an alias for an existing object. This means that **references cannot be reassigned** to refer to a different object after they are initialized. They are also **not pointers** and do not have pointer semantics.
+
+- Trying to reassign a reference will change the value of the object it refers to. For example:
+```cpp
+#include <iostream>
+
+int main()
+{
+    int x { 5 };
+    int y { 6 };
+
+    int& ref { x }; // ref is now an alias for x
+
+    ref = y; // assigns 6 (the value of y) to x (the object being referenced by ref)
+    // The above line does NOT change ref into a reference to variable y!
+
+    std::cout << x << '\n'; // user is expecting this to print 5 but it prints 6
+
+    return 0;
+}
+```
+
+- References and **referents** (i.e., the objects they refer to) have independent lifetimes. This means that a reference can outlive the object it refers to, leading to undefined behavior if the reference is used after the object has been destroyed. This is called **dangling reference**.
+
+- Since, references are not objects, there cannot be a reference to a reference. Hoowever, when we write something like:
+```cpp
+int var{};
+int& ref1{ var };  // an lvalue reference bound to var
+int& ref2{ ref1 }; // an lvalue reference bound to var
+``` 
+then `ref2` is not a reference to `ref1`, but rather a reference to the object that `ref1` refers to. This is because `ref1` is an lvalue expression that evaluates to the object it refers to. So, `ref2` is just another name for `var`.
+
+- A reference to a reference (to an `int`) would have syntax `int&&` -- but since C++ doesn’t support references to references, this syntax was repurposed in C++11 to indicate an rvalue reference.
+
+- Non-const lvalue references can bind to modifiable lvalues, while const lvalue references can bind to both modifiable and non-modifiable lvalues. In the second case, the reference is treated as a const lvalue reference and the object it refers to cannot be modified through the reference. However, the object itself can still be modified directly.
+
+- Const lvalue references can bind to rvalues as well. If we try to bind a const lvalue reference to a value of a different type, the compiler will **create a temporary object** of the same type as the reference, initialize it using the value, and then bind the reference to the temporary. In such cases, the **lifetime of the temporary object is extended** to the lifetime of the reference. Also, nn such cases, modifying the original value will not reflect in the temporary object and hence the reference will **not be able to modify the original value**.
+
+- `constexpr` references can bind only to static variables because (locals or globals) because the compiler knows where static objects will be instantiated in memory, so it can treat that address as a compile-time constant. This is not the case for local variables, which are created at runtime and hence their addresses are not known at compile-time.
+
+- **Pass by reference** allows us to pass arguments to a function without making copies of those arguments each time the function is called.
+
+- Because a reference to a non-const value can only bind to a modifiable lvalue (essentially a non-const variable), this means that pass by reference only works with arguments that are modifiable lvalues. n practical terms, this significantly limits the usefulness of pass by reference to non-const, as it means we can not pass const variables or literals. An easy way around this is to **pass by const reference**.
+
+- Passing by const reference offers the same primary benefit as pass by non-const reference (avoiding making a copy of the argument), while also guaranteeing that the **function can not change** the value being referenced.
+As a rule of thumb, pass fundamental types by value and class types by const reference.
+
+- Despite the benefits of passing by reference, we don't use it everytime because:
+  - For objects that are cheap to copy, the cost of copying is similar to the cost of binding, but accessing the objects is faster and the compiler is likely to be able to optimize better.
+  - For objects that are expensive to copy, the cost of the copy dominates other performance considerations.
+
+- Between, `std::string_view` and `const std::string&`, `std::string_view` is preferred because it is a lightweight, non-owning reference to a string that can be used to avoid unnecessary copies. It is also more efficient than `const std::string&` because it does not require the overhead of creating a temporary object.
+
+- A **pointer** is an object that holds a memory address (typically of another variable) as its value. This allows us to store the address of some other object to use later. A type that specifies a pointer (e.g. `int*`) is called a pointer type. Much like reference types are declared using an ampersand (`&`) character, pointer types are declared using an asterisk (`*`)
+
+- The ampersand (`&`) operator is used to get the address of an object, while the asterisk (`*`) operator is used to dereference a pointer (i.e., access the object that the pointer points to). `*ptr` will return an **lvalue expression** that refers to the object that `ptr` points to. 
+
+- A pointer that has not been initialized to point to a valid object is called a **wild pointer**. Wild pointers contain garbage values and dereferencing them leads to undefined behavior. 
+
+- We can use assignment with pointers in two different ways:
+  - To change what the pointer is pointing at (by assigning the pointer a new address)
+  - To change the value being pointed at (by assigning the dereferenced pointer a new value)
+
+- The size of the pointer depends on the architecture of the machine for which the program is compiled. For example, on a 32-bit executable uses 32 bits (4 bytes) for pointers, while a 64-bit executable uses 64 bits (8 bytes) for pointers. The size of the pointer type is independent of the size of the object it points to because pointer just stores the memory address. For example, a pointer to an `int` is the same size as a pointer to a `double`, even though `int` and `double` are different sizes.
+
+- A **dangling pointer** is a pointer that points to an object that has been destroyed or deallocated. Dereferencing a dangling pointer leads to undefined behavior.
+
+- A pointer that doesn't point to anything is called a **null pointer**. Dereferencing a null pointer leads to undefined behavior. A null pointer is typically represented by the value `nullptr` in modern C++. In older C++ code, `NULL` or `0` was used to represent a null pointer.
+
+- A null pointer implicitly converts to a boolean value of `false` and any other pointer value implicitly converts to a boolean value of `true`. We can use this to test if a pointer is null or not. However, conditionals can only identify if a pointer is null or not, not if it is a dangling pointer.
+
+- Pointers have the additional abilities of being able to change what they are pointing at, and to be pointed at null. However, these pointer abilities are also inherently dangerous: A null pointer runs the risk of being dereferenced, and the ability to change what a pointer is pointing at can make creating dangling pointers easier. Since references can’t be bound to null, we don’t have to worry about null references. And because references must be bound to a valid object upon creation and then can not be reseated, dangling references are harder to create. Because they are safer, references should be favored over pointers, unless the additional capabilities provided by pointers are required.
+
+- A **pointer to a const** object can be declared using the `const int*` syntax. Similar to references, a pointer to a `const` object can be used to bind to a const as well as a non-const object. However, the pointer itself can be changed to point to a different object. This is because the pointer is not const, only the object it points to is const.
+
+- A **const pointer** can be declared using the `int* const` syntax. A const pointer can only be initialized once and cannot be changed to point to a different object. However, the object it points to can be modified. This is because the pointer itself is const, only the object it points to is not const.
+
+- There are some rules we need to remember with regards to pointers, const pointers and pointers to const:
+  - A non-const pointer (e.g. `int* ptr`) can be assigned another address to change what it is pointing at.
+  - A const pointer (e.g. `int* const ptr`) always points to the same address, and this address can not be changed.
+  - A pointer to a non-const value (e.g. `int* ptr`) can change the value it is pointing to. These can not point to a const value.
+  - A pointer to a const value (e.g. `const int* ptr`) treats the value as const when accessed through the pointer, and thus can not change the value it is pointing to. These can be pointed to const or non-const l-values (but not r-values, which don’t have an address).
+  - A const before the asterisk (e.g. const int* ptr) is associated with the type being pointed to. Therefore, this is a pointer to a const value, and the value cannot be modified through the pointer.
+  - A const after the asterisk (e.g. int* const ptr) is associated with the pointer itself. Therefore, this pointer cannot be assigned a new address.
+
+- Apart from pass by value and pass by reference, C++ also supports **pass by address**. This is done by passing a pointer to the function instead of the actual object. This allows us to modify the original object without making a copy of it. Pass by address is similar to pass by reference, but it is less safe because it allows us to pass null pointers and dangling pointers. It is also clutters the code with pointer syntax. Hence, pass by reference is preferred over pass by address. 
+
+- We can also pass by address using a reference to a pointer using the syntax `int*& ptr`. This allows us to modify the pointer itself (i.e., change what it is pointing to) as well as the object it points to. Pass by referebces to pointers are not commonly used and the syntax can be easily messed up by using `int&* ptr` instead of `int*& ptr`. however, this will result in a compiler error because a pointer to a reference cannot exist as a reference is not an object.
+
+- The reason why `0` or `NULL` is not preferred is because 0 can be interpreted as an integer literal, and NULL is a macro that is not defined by the C++ standard (it could be `0`,`0L`, or `((void*)0)`). This can lead to confusion and ambiguity in the code. eg:  In the case of two overloaded functions `void foo(int)` and `void foo(int*)`, calling `foo(0)` will call the first function because `0` is an integer literal. If that was not the intended function, then we may have a problem. On the other hand, `foo(NULL)` could call either function depending on how NULL is defined.
+
+- `nullptr` is the only value that `std::nullptr_t` can take. It is a null pointer constant that can be used to represent a null pointer in a type-safe way. It is not an integer literal and does not have any other meaning in C++. If we want to write a function that accepts only a `nullptr` literal argument, we can make the parameter a `std::nullptr_t`. If we have an overloaded function that accepts a pointer and we set a pointer to `nullptr` and call the function, it will call the pointer overload because C++ matches overloads on type not values and a pointer (with value of `nullptr`) cannot implicitly convert to `std::nullptr_t`.
+
+- Pass by address just copies an address from the caller to the called function -- which is just passing an address by value. Therefore, we can conclude that C++ really passes everything by value! The properties of pass by address (and reference) come solely from the fact that we can dereference the passed address to change the argument, which we can not do with a normal value parameter!
+
+- Similar to pass by reference (or address), we can also return by reference (or address). However, there is one major caveat: Objects returned by reference must live beyond the scope of the function returning the reference, or a dangling reference will result. Never return a (non-static) local variable or temporary by reference.
+
+- Reference lifetime extension for temporary objects does not work across function boundaries.
+
+- Avoid returning references to non-const local static variables.
+
+- Prefer return by reference over return by address unless the ability to return “no object” (using `nullptr`) is important.
+
+- Parameters used only for receiving input from the caller are called **in parameters**. Parameters used only for returning information to the caller are called **out parameters**. Parameters used for both input and output are called **in-out parameters**.
+
+- A **top-level const** is a const that applies to the object itself. For example, `const int x`, `int* const ptr`. There is no top-level const syntax for references because references are implicitly const. A **low-level const** is a const that applies to the object being pointed to. For example, `const int* ptr`, `const int& ref`. A reference to a const object is a low-level const. A pointer can have top-level, low-level, or both types of const. eg: `const int* const ptr`
+
+- Type deduction only drops top-level constness.
+```cpp
+#include <string>
+
+const std::string& getConstRef(); // some function that returns a const reference
+
+int main()
+{
+    auto ref1{ getConstRef() };        // std::string (reference and top-level const dropped)
+    const auto ref2{ getConstRef() };  // const std::string (reference dropped, const dropped, const reapplied)
+
+    auto& ref3{ getConstRef() };       // const std::string& (reference dropped and reapplied, low-level const not dropped)
+    const auto& ref4{ getConstRef() }; // const std::string& (reference dropped and reapplied, low-level const not dropped)
+
+    return 0;
+}
+```
+In the above example, since `getConstRef()` returns a `const std::string&`, the reference is dropped first (for initialization), leaving us with a `const std::string`. This const is now a top-level const, so it is also dropped, leaving the deduced type as `std::string` for `ref1`. For `ref2`, this is similar to the `ref1` case, except we’re reapplying the `const` qualifier, so the deduced type is `const std::string`. Things get more interesting with `ref3`. Normally the reference would be dropped first, but since we’ve reapplied the reference, it is not dropped. That means the type is still `const std::string&`. And since this const is a low-level const, it is not dropped. Thus the deduced type is `const std::string&`. The `ref4` case works similarly to `ref3`, except we’ve reapplied the const qualifier as well. Since the type is already deduced as a reference to `const`, us reapplying `const` here is redundant. That said, using `const` here makes it explicitly clear that our result will be const (whereas in the `ref3` case, the constness of the result is implicit and not obvious).
+
+- Constexpr is not part of an expression’s type, so it is not deduced by `auto`.
+
+- Type deduction doesn't drop pointers.
+```cpp
+#include <string>
+
+std::string* getPtr(); // some function that returns a pointer
+
+int main()
+{
+    auto ptr1{ getPtr() };  // std::string*
+    auto* ptr2{ getPtr() }; // std::string*
+
+    return 0;
+}
+```
+Here, when we use `auto` the type deduced is a pointer `std:string*` whereas when we use `auto*` the type deduced is `std::string`. However, for `auto*` the pointer is reapplied later and the practical effect is the same as `ptr1` and `ptr2` are both pointers to `std::string`. However, for `auto*`, the initialzer must be a pointer type. eg: `auto* ptr4{ *getPtr() }` will not compile because the initializer is not a pointer type.  
+
+- Just like with references, only top-level constness is dropped when using during pointer type deduction.
+
+- `std::optional` is a class template that represents an object that may or may not contain a value. It can be used in the followiing ways:
+```cpp
+std::optional<int> o1 { 5 };            // initialize with a value
+std::optional<int> o2 {};               // initialize with no value
+std::optional<int> o3 { std::nullopt }; // initialize with no value
+
+if (o1.has_value()) // call has_value() to check if o1 has a value
+if (o2)             // use implicit conversion to bool to check if o2 has a value
+
+std::cout << *o1;             // dereference to get value stored in o1 (undefined behavior if o1 does not have a value)
+std::cout << o2.value();      // call value() to get value stored in o2 (throws std::bad_optional_access exception if o2 does not have a value)
+std::cout << o3.value_or(42); // call value_or() to get value stored in o3 (or value `42` if o3 doesn't have a value)
+```
+
+- Even though we can dereference it to get the value, `std::optional` has value semantics (meaning it contains a value) unlike pointers which have reference semantics.
+
+- C++ allows us to create new, custom types that we can use in our programs. These types are called **user-defined types** or **program-defined types**. C++ has 2 different categories of compound types that can be used to create program-defined types:
+  - **Enumerated types**: These are used to create a new type that can take on a limited set of values. They are defined using the `enum` keyword. Enumerated types can be either scoped or unscoped.
+  - **Class types**: These are used to create a new type that can have data members and member functions. They are defined using the `class` keyword. Class types can be struct, class, or union types.
+
+- A program-defined type must have a name and a definition before it can be used. This is called **type definition**. Type definitions end with a semicolon.
+
+- Type definitions that need to be used in multiple translation units should be placed in a header file and included in the translation units that need to use them. Type definitions are **partially exempt from the one definition rule (ODR)**. They can be defined in multiple translation units, but they must be identical in all translation units.
+
+- C++ defines the term  **user-defined type** as any class type or enumerated type that is defined by you, the standard library, or the implementation (e.g. types defined by the compiler to support language extensions). Perhaps counter-intuitively, this means `std::string` (a class type defined in the standard library) is considered to be a user-defined type! To provide additional differentiation, the C++20 language standard helpfully defines the term **program-defined type** to mean class types and enumerated types that are not defined as part of the standard library, implementation, or core language. In other words, “program-defined types” only include class types and enum types that are defined by us (or a third-party library).
+
+- An **enumeration** (also called an **enumerated type** or an **enum**) is a compound data type whose values are restricted to a set of named symbolic constants (called **enumerators**). The initializer for an enumerated type must be one of the defined enumerators for that type. eg:
+```cpp
+// Define a new unscoped enumeration named Color
+enum Color
+{
+    // Here are the enumerators
+    // These symbolic constants define all the possible values this type can hold
+    // Each enumerator is separated by a comma, not a semicolon
+    red,
+    green,
+    blue, // trailing comma optional but recommended
+}; // the enum definition must end with a semicolon
+
+int main()
+{
+    // Define a few variables of enumerated type Color
+    Color apple { red };   // my apple is red
+    Color shirt { green }; // my shirt is green
+    Color cup { blue };    // my cup is blue
+
+    Color socks { white }; // error: white is not an enumerator of Color
+    Color hat { 2 };       // error: 2 is not an enumerator of Color
+
+    return 0;
+}
+```
+
+- Unscoped enumerations put the enumerators in the same scope as the enumeration itself. The enumerators of an enumeration defined within a function will shadow identically named enumerators defined in the global scope.
+
+- When we define an enumeration, each enumerator is automatically associated with an integer value based on its position in the enumerator list. By default, the first enumerator is given the integral value `0`, and each subsequent enumerator has a value one greater than the previous enumerator:
+```cpp
+enum Color
+{
+    black,   // 0
+    red,     // 1
+    blue,    // 2
+    green,   // 3
+    white,   // 4
+    cyan,    // 5
+    yellow,  // 6
+    magenta, // 7
+};
+```
+
+- Enumerators can be explicitly assigned values. If we assign a value to an enumerator, the next enumerator will have a value one greater than the previous enumerator unless we explicitly assign it a value as well. For example:
+```cpp
+enum Animal
+{
+    cat = -3,    // values can be negative
+    dog,         // -2
+    pig,         // -1
+    horse = 5,
+    giraffe = 5, // shares same value as horse
+    chicken,     // 6
+};
+```
+
+- If an enumeration is zero-initialized, it will be given a value of `0` even if there is no enumerator with that value. Make the enumerator representing `0` the one that is the best default meaning for your enumeration. If no good default meaning exists, consider adding an “invalid” or “unknown” enumerator that has value `0`, so that state is explicitly documented and can be explicitly handled where appropriate.
+
+- C+++ doesn't specify which **underling type** to be used for enumerated types. We can also change the underlying type of an enumerated type. eg: `enum Color : std::int8_t { red, green, blue };`
+
+- Integral values cannot be implicitly converted to enumerated types. We can use explicit conversion using `static_cast` to convert an integral value to an enumerated type. It is also safe to static_cast any integral value that is in range of the target enumeration’s underlying type, even if there are no enumerators representing that value. Static casting a value outside the range of the underlying type will result in undefined behavior.
+
+- **Operator overloading** lets us define overloads of existing operators, so that we can make those operators work with our program-defined data types. To do this, we define a function that has the same name as the operator we want to overload. eg: `operator+(x, y)`. We can use operator overloading to print the string values of our enumerated types using the enumerator names. The same can bbe done to input string values to our enumerated types.
+
+- **Scoped enumerations** (also called **strongly typed enumerations**) are a new feature introduced in C++11. They are defined using the `enum class` or `enum struct` keyword. Scoped enumerations are similar to unscoped enumerations, but they have a few key differences:
+  - The enumerators of a scoped enumeration are not put in the same scope as the enumeration itself. This means that we must use the enumeration name to access the enumerators. For example: `Color::red`.
+  - The enumerators of a scoped enumeration do not implicitly convert to integral types. This means that we cannot assign an integral value to a scoped enumeration variable without an explicit cast.
+
+- In cases where it is useful to have the enumerators of a scoped enumeration be implicitly convertible to integral types, we can use `static_cast` or `std::to_underlying` (in the utility header) to convert the enumerator to convert it to its underlying type.
+
+- `using enum` statement imports all of the enumerators from an enum into the current scope. When used with an enum class type, this allows us to access the enum class enumerators without having to prefix each with the name of the enum class.
