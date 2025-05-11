@@ -1,6 +1,6 @@
 # Important points regarding C++
 
-Source: [learncpp.com](https://www.learncpp.com/)
+Source: [learncpp.com](https://www.learncpp.com/), [cppreference.com](https://en.cppreference.com/)
 
 - C++ is a statically typed language, meaning that the type of a variable must be known at compile time.
 
@@ -656,3 +656,155 @@ enum Animal
 - In cases where it is useful to have the enumerators of a scoped enumeration be implicitly convertible to integral types, we can use `static_cast` or `std::to_underlying` (in the utility header) to convert the enumerator to convert it to its underlying type.
 
 - `using enum` statement imports all of the enumerators from an enum into the current scope. When used with an enum class type, this allows us to access the enum class enumerators without having to prefix each with the name of the enum class.
+
+- A `struct` (short for **structure**) is a program-defined type that is used to group related data together. The variables that are part of the struct are called **data members** or **member variables**. A struct can also have **member functions** (also called **methods**) that operate on the data members of the struct. eg:
+```cpp
+struct Employee
+{
+    int id {};
+    int age {};
+    double wage {};
+};
+```
+
+- To access a particular member of a struct, we use the **member selection operator** (`.`) Struct member variables behave like normal variables, so we can use them in expressions, assign values to them, and pass them to functions.
+
+- In general programming, an **aggregate data type** (or **aggregates**) is any type that can contain multiple data members. Some types of aggregates allow members to have different types (e.g. structs), while others require that all members must be of a single type (e.g. arrays). In C++, structs with only data members are aggregates.
+
+- Aggregates use a form of initialization called **aggregate initialization**, which allows us to directly initialize the members of aggregates. To do this, we provide an **initializer list** as an initializer, which is just a braced list of comma-separated values. Each of these initialization forms does a **memberwise initialization**, which means each member in the struct is initialized in the order of declaration.
+
+- If an aggregate is initialized but the number of initialization values is fewer than the number of members, then each member without an explicit initializer is initialized as follows:
+  - If the member has a default member initializer, that is used.
+  - Otherwise, the member is copy-initialized from an empty initializer list. In most cases, this will perform value-initialization on those members (on class types, this will invoke the default constructor even if a list constructor exist).
+
+- **Designated initializers** allow you to explicitly define which initialization values map to which members. eg:
+```cpp
+struct Foo
+{
+    int a{ };
+    int b{ };
+    int c{ };
+};
+
+int main()
+{
+    Foo f1{ .a{ 1 }, .c{ 3 } }; // ok: f1.a = 1, f1.b = 0 (value initialized), f1.c = 3
+    Foo f2{ .a = 1, .c = 3 };   // ok: f2.a = 1, f2.b = 0 (value initialized), f2.c = 3
+    Foo f3{ .b{ 2 }, .a{ 1 } }; // error: initialization order does not match order of declaration in struct
+
+    return 0;
+}
+```
+
+- References to a struct object behave like the object itself and can be used to directly access the members of the struct using the **member selection operator** (`.`). However, if we have a pointer to a struct object, we cannot use it to directly access the members of the struct. We have 2 ways to deal with this:
+  - Use the **member selection from pointer operator** (`->`) (or the **arrow operator**) to access the members of the struct. This operator is used to dereference the pointer and access the member of the struct in one step. For example: `ptr->member`.
+  - Use the **dereference operator** (`*`) to dereference the pointer and then use the member selection operator (`.`) to access the member of the struct. For example: `(*ptr).member`. This is equivalent to using the arrow operator, but it is less concise and less readable.
+
+- If the member accessed via `operator->` is a pointer to a class type, `operator->` can be applied again in the same expression to access the member of that class type.
+
+- A **class template** is a template definition for instantiating class types. eg:
+```cpp
+#include <iostream>
+
+template <typename T>
+struct Pair
+{
+    T first{};
+    T second{};
+};
+
+int main()
+{
+    Pair<int> p1{ 5, 6 };        // instantiates Pair<int> and creates object p1
+    std::cout << p1.first << ' ' << p1.second << '\n';
+
+    Pair<double> p2{ 1.2, 3.4 }; // instantiates Pair<double> and creates object p2
+    std::cout << p2.first << ' ' << p2.second << '\n';
+
+    Pair<double> p3{ 7.8, 9.0 }; // creates object p3 using prior definition for Pair<double>
+    std::cout << p3.first << ' ' << p3.second << '\n';
+
+    return 0;
+}
+```
+- Since, different initializations of the same template type are not considered to be different types, we can pass objects of the same template type to functions that take the template type as a parameter. eg:
+```cpp
+template <typename T>
+constexpr T max(Pair<T> p)
+{
+    return (p.first < p.second ? p.second : p.first);
+}
+```
+This function will create seperate instantiations for each type of `Pair` for types like `int`, `double`, etc. depending on the types of the objects passed to it. 
+
+- Just like function templates, class templates are typically defined in header files so they can be included into any code file that needs them. Both template definitions and type definitions are exempt from the one-definition rule, so this won’t cause problems.
+
+- Starting in C++17, when instantiating an object from a class template, the compiler can deduce the template types from the types of the object’s initializer (this is called **class template argument deduction** or **CTAD** for short). eg:
+```cpp
+#include <utility> // for std::pair
+
+int main()
+{
+    std::pair<int, int> p1{ 1, 2 }; // explicitly specify class template std::pair<int, int> (C++11 onward)
+    std::pair p2{ 1, 2 };           // CTAD used to deduce std::pair<int, int> from the initializers (C++17)
+
+    return 0;
+}
+```
+
+- In C++17, CTAD doesn't know how to deduce the template arguments for aggregate class templates. To address this, we can provide the compiler with a deduction guide, which tells the compiler how to deduce the template arguments for a given class template. eg:
+```cpp
+template <typename T, typename U>
+struct Pair
+{
+    T first{};
+    U second{};
+};
+
+// Here's a deduction guide for our Pair (needed in C++17 only)
+// Pair objects initialized with arguments of type T and U should deduce to Pair<T, U>
+template <typename T, typename U>
+Pair(T, U) -> Pair<T, U>;
+
+int main()
+{
+    Pair<int, int> p1{ 1, 2 }; // explicitly specify class template Pair<int, int> (C++11 onward)
+    Pair p2{ 1, 2 };           // CTAD used to deduce Pair<int, int> from the initializers (C++17)
+
+    return 0;
+}
+```
+
+- Creating a type alias for a class template where all template arguments are explicitly specified works just like a normal type alias:
+```cpp
+template <typename T>
+struct Pair
+{
+    T first{};
+    T second{};
+};
+
+using Point = Pair<int>; // create normal type alias
+Point p { 1, 2 };        // compiler replaces this with Pair<int>
+```
+
+- We can also define an **alias template**, which is a template that can be used to instantiate type aliases. Just like type aliases do not define distinct types, alias templates do not define distinct types.
+```cpp
+template <typename T>
+struct Pair
+{
+    T first{};
+    T second{};
+};
+
+// Here's our alias template
+// Alias templates must be defined in global scope
+template <typename T>
+using Coord = Pair<T>; // Coord is an alias for Pair<T>
+```
+
+- Alias templates:
+  - Must be defined in global scope
+  - As of C++20, we can use **alias template deduction**, which will deduce the type of the template arguments from an initializer in cases where the aliased type would work with CTAD.As of C++20, we can use alias template deduction, which will deduce the type of the template arguments from an initializer in cases where the aliased type would work with CTAD.
+
+- 
